@@ -26,7 +26,7 @@ public class RecursiveQsqEngine {
         /**
          * Tracks which input tuples have been used for each rule.
          */
-        private Map<Object,Object> inputByRule;//Map<AdornedTgd, Map<String,List<String>> > -> inputByRule[Rule] = [[$var1] = [value1,value2], [$var2] = ...]
+        private Map<Object,Object> inputByRule;//Map<AdornedTgd, Map<String,Map<String,List<String>>>   > -> inputByRule[Rule] =  ( [predicate1] = [[$var1] = [value1,value2], [$var2] = ...]] )
         /**
          * Holds all the adorned rules for a given adorned predicate.
          */
@@ -136,7 +136,7 @@ public class RecursiveQsqEngine {
                     body.add(new AdornedAtom(left,booleans));
                 }
 
-                //non determinist file reading : need a body correction :
+                //non determinist file reading : need a body correction and variable affectations :
                 for (AdornedAtom atom : body) {
                     Map<String,List<String>> constantsForOnePredicate = constants.get(atom.getAtom().getName());
                     for (int index = 0; index < atom.getAtom().getVars().toArray().length; index++) {
@@ -144,7 +144,8 @@ public class RecursiveQsqEngine {
                         for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
                             if (entry.getValue().containsKey(((Variable)atom.getAtom().getVars().toArray()[index]).getName())) {
                                 booleans.add(true);
-                                constantsForOnePredicate.put(((Variable)atom.getAtom().getVars().toArray()[index]).getName(),entry.getValue().get(((Variable)atom.getAtom().getVars().toArray()[index]).getName()));
+                                if (!constantsForOnePredicate.containsKey(((Variable)atom.getAtom().getVars().toArray()[index]).getName()))
+                                    constantsForOnePredicate.put(((Variable)atom.getAtom().getVars().toArray()[index]).getName(),entry.getValue().get(((Variable)atom.getAtom().getVars().toArray()[index]).getName()));
                                 isFinallyBound = true;
                                 break;
                             }
@@ -163,8 +164,7 @@ public class RecursiveQsqEngine {
             }
         }
         AdornedTgd adornedQuery =((List<AdornedTgd>)state.adornedRules.get(q.getName())).get(0);
-        System.out.println(state);
-        //qsqrSubroutine(adornedQuery,null,state);
+        qsqrSubroutine(adornedQuery,null,state);
         return result;
     }
 
@@ -194,30 +194,92 @@ public class RecursiveQsqEngine {
      *            current state of evaluation-wide variables
      */
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
-        System.out.println(rule);
-        System.out.println(state);
-        System.out.println(rule.bodyHasFree());
-        if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer.
-            Map<String,List<String>> inputs = (Map<String,List<String>>)state.inputByRule.get(rule);
+        if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs.
+            Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule);
             AdornedAtom head = rule.getHead();
-            List<String[]> answers = new ArrayList<>();
-            for (int h = 0; h < inputs.get(((Variable)head.getAtom().getVars().toArray()[0]).getName()).size(); h++) {
-                String couple [] = new String [head.getAtom().getVars().toArray().length];
-                for(int i = 0; i < head.getAtom().getVars().toArray().length; i++) {
-                    couple[i] = inputs.get(((Variable)head.getAtom().getVars().toArray()[i]).getName()).get(h);
+            List<AdornedAtom> body = rule.getBody();
+            List<List<String>> answers = new ArrayList<>();
+            Map<String,List<String>> fusion = new HashMap<>(inputs.get(body.get(0).getAtom().getName()));
+            for(int i = 1; i < inputs.size(); i++) {
+                Map<String, List<String>> element= inputs.get(body.get(i).getAtom().getName()); //inputs for the i-th atom.
+                List<String> elementKeys = new ArrayList<>();
+                for (Map.Entry<String,List<String>> entry : element.entrySet()) {
+                    elementKeys.add(entry.getKey());
                 }
-                answers.add(couple);
-            }
-            state.ans.put(head.getAtom().getName(),answers);
-            for (String []s :  (List<String[]>) state.ans.get("query"))
-                System.out.println(" [ " + s[0]  + " , " + s[1] +  " ] ");
-            for(AdornedTgd tgd : (List<AdornedTgd>) state.adornedRules.get(head.getAtom().getName()) ) {
-                System.out.println(tgd.getHead().getAtom().getName());
-                for (int index = 0; index < tgd.getHead().getAtom().getVars().toArray().length; index++) {
-                    tgd.getHead().getAdornment().set(index,true);
+                List<String> fusionKeys = new ArrayList<>();
+                for (Map.Entry<String,List<String>> entry : fusion.entrySet()) {
+                    fusionKeys.add(entry.getKey());
                 }
+
+                for(String s : elementKeys) {
+                    if(!fusion.containsKey(s)) {
+                        List<String> newColumn = new ArrayList<>();
+                        Map.Entry<String,List<String>> entry = fusion.entrySet().iterator().next();
+                        for(int j = 0; j < entry.getValue().size();j++) {
+                            newColumn.add("");
+                        }
+                        fusion.put(s,newColumn);
+                    }
+                }
+                for(String s : fusionKeys) {
+                    if(!element.containsKey(s)) {
+                        List<String> newColumn = new ArrayList<>();
+                        Map.Entry<String,List<String>> entry = element.entrySet().iterator().next();
+                        for(int j = 0; j < entry.getValue().size();j++) {
+                            newColumn.add("");
+                        }
+                        element.put(s,newColumn);
+                    }
+                }
+                for (Map.Entry<String,List<String>> entry : fusion.entrySet()) {
+                    fusionKeys.add(entry.getKey());
+                }
+                elementKeys = fusionKeys;
+                int minElement = Integer.min(fusion.get(fusionKeys.get(0)).size(),element.get(elementKeys.get(0)).size());
+                Map<String, List<String>> minMap;
+                Map<String, List<String>> otherMap;
+                if (fusion.get(fusionKeys.get(0)).size() <= element.get(elementKeys.get(0)).size()) {
+                    minMap = fusion;
+                    otherMap = element;
+                } else {
+                    minMap = element;
+                    otherMap = fusion;
+                }
+                System.out.println(fusion);
+                System.out.println(element);
+                for(int j =  0; j < minElement; j++) {
+                    Boolean hasChanged = false;
+                    int indexValuesMin = 0;
+                    for(String s : fusionKeys) {
+                        if (minMap.get(s).get(j).equals("")) {
+                            List<String> newList = minMap.get(s);
+                            List<String> variables = new ArrayList<>();
+                            List<String> Line = new ArrayList<>();
+                            for (String s2 : fusionKeys) {
+                                if (!minMap.get(s2).get(j).equals("")) {
+                                    Line.add(minMap.get(s2).get(j));
+                                    variables.add(s2);
+                                }
+                            }
+                            for (int k = 0; k < otherMap.get(s).size(); k++)  {
+                                if(otherMap.get(variables.get(0)).get(k).equals(Line.get(0))) {
+                                    newList.set(j,otherMap.get(s).get(k));
+                                    minMap.put(s,newList);
+                                }
+
+                            }
+                            hasChanged = true;
+                        }
+                        indexValuesMin ++;
+                    }
+                    if (!hasChanged) {
+                        minMap.remove(j);
+                    }
+                }
+                fusion = minMap;
+                System.out.println(fusion);
+
             }
-            System.out.println(state);
         } else {
             System.out.println("Build the recursion");
         }

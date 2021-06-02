@@ -1,6 +1,6 @@
 # DatalogInterpreter
 
-##Useful Commands :
+## Useful Commands :
 
 <ul>
   <li> <i> mvn clean </i> to clean target repository </li>

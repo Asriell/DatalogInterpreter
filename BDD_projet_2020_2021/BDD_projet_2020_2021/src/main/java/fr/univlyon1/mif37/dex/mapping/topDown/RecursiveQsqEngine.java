@@ -189,7 +189,7 @@ public class RecursiveQsqEngine {
             }
             state.ans.put(head.getAtom().getName(),answers);
             for (String []s :  (List<String[]>) state.ans.get("query"))
-                System.out.println(" [ " + s[0] + " , " + s[1] + " ] ");
+                System.out.println(" [ " + s[0]  + " , " + s[1] +  " ] ");
             for(AdornedTgd tgd : (List<AdornedTgd>) state.adornedRules.get(head.getAtom().getName()) ) {
                 System.out.println(tgd.getHead().getAtom().getName());
                 for (int index = 0; index < tgd.getHead().getAtom().getVars().toArray().length; index++) {

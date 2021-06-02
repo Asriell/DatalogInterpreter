@@ -125,6 +125,16 @@ public class RecursiveQsqEngine {
                     }
                     body.add(new AdornedAtom(left,booleans));
                 }
+
+                //non determinist file reading : need a body correction :
+                for (AdornedAtom atom : body) {
+                    for (int index = 0; index < atom.getAtom().getVars().toArray().length; index++) {
+                        if (constants.containsKey(((Variable)atom.getAtom().getVars().toArray()[index]).getName()) && !atom.getAdornment().get(index)) {
+                            atom.getAdornment().set(index,true);
+                        }
+                    }
+                }
+
                 AdornedTgd adornedRule =  new AdornedTgd(head,body);
                 List<AdornedTgd> adornedRules = new ArrayList<>();
                 adornedRules.add(adornedRule);

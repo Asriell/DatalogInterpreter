@@ -1,5 +1,6 @@
 package fr.univlyon1.mif37.dex.mapping.topDown;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import fr.univlyon1.mif37.dex.mapping.*;
 
 import java.util.*;
@@ -86,7 +87,7 @@ public class RecursiveQsqEngine {
 
 
         //Beginning of the adornment of the query
-        Map<String,List<String>> constants = new HashMap<>(); //constants[parameter] = value
+        Map<String,Map<String,List<String>>> constants = new HashMap<>();
         for(Tgd tgd : this.mapping.getTgds()) {
             if (q == tgd.getRight()) {
                 List<Boolean> booleans = new ArrayList<>(q.getArgs().length);//list of adornments
@@ -97,6 +98,7 @@ public class RecursiveQsqEngine {
                 //System.out.println(head);
                 List<AdornedAtom> body = new ArrayList<>();
                 for (int i = 0; i < tgd.getLeft().size(); i++) {
+                    Map<String,List<String>> constantsForOnePredicate = new HashMap<>(); //constants[parameter] = value
                     Atom left = ((Literal) tgd.getLeft().toArray()[i]).getAtom();
                     booleans = new ArrayList<>(left.getArgs().length);
                     Boolean isBound = false;
@@ -104,32 +106,50 @@ public class RecursiveQsqEngine {
                         if (edb.getName().equals(left.getName())) {//there is EDBs with the predicate of the atom -> its variables are bound
                             isBound = true;
                             for(int j = 0; j < edb.getAttributes().length; j++) {//add values to constants array
-                                if (!constants.containsKey(((Variable)left.getVars().toArray()[j]).getName())) {
-                                    constants.put(((Variable)left.getVars().toArray()[j]).getName(),new ArrayList<String>());
+                                if (!constantsForOnePredicate.containsKey(((Variable)left.getVars().toArray()[j]).getName())) {
+                                    constantsForOnePredicate.put(((Variable)left.getVars().toArray()[j]).getName(),new ArrayList<String>());
                                 }
-                                if (!constants.get(((Variable)left.getVars().toArray()[j]).getName()).contains(edb.getAttributes()[j])) {
-                                    List<String> tmp = constants.get(((Variable)left.getVars().toArray()[j]).getName());
-                                    tmp.add(edb.getAttributes()[j]);//add the new constant to the constants set of a given variable
-                                    constants.put(((Variable)left.getVars().toArray()[j]).getName(),tmp);
-                                }
+                                List<String> tmp = constantsForOnePredicate.get(((Variable)left.getVars().toArray()[j]).getName());
+                                tmp.add(edb.getAttributes()[j]);//add the new constant to the constants set of a given variable
+                                constantsForOnePredicate.put(((Variable)left.getVars().toArray()[j]).getName(),tmp);
                             }
                         }
                     }
                     for(int j = 0; j < left.getArgs().length; j++) {
-                        //System.out.println(constants);
-                        if (constants.containsKey(((Variable)left.getVars().toArray()[j]).getName()) || isBound) { //an atom before has the variable Bound or this variable is Bound by EDB (previous loop)
+                        if (isBound) {
                             booleans.add(true);
                         } else {
-                            booleans.add(false);
+                            Boolean isFinallyBound = false;
+                            for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
+                                if (entry.getValue().containsKey(((Variable)left.getVars().toArray()[j]).getName())) {
+                                    booleans.add(true);
+                                    isFinallyBound = true;
+                                    break;
+                                }
+                            }
+                            if (!isFinallyBound) {
+                                booleans.add(false);
+                            }
                         }
                     }
+                    constants.put(left.getName(),constantsForOnePredicate);
                     body.add(new AdornedAtom(left,booleans));
                 }
 
                 //non determinist file reading : need a body correction :
                 for (AdornedAtom atom : body) {
+                    Map<String,List<String>> constantsForOnePredicate = constants.get(atom.getAtom().getName());
                     for (int index = 0; index < atom.getAtom().getVars().toArray().length; index++) {
-                        if (constants.containsKey(((Variable)atom.getAtom().getVars().toArray()[index]).getName()) && !atom.getAdornment().get(index)) {
+                        Boolean isFinallyBound = false;
+                        for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
+                            if (entry.getValue().containsKey(((Variable)atom.getAtom().getVars().toArray()[index]).getName())) {
+                                booleans.add(true);
+                                constantsForOnePredicate.put(((Variable)atom.getAtom().getVars().toArray()[index]).getName(),entry.getValue().get(((Variable)atom.getAtom().getVars().toArray()[index]).getName()));
+                                isFinallyBound = true;
+                                break;
+                            }
+                        }
+                        if (isFinallyBound) {
                             atom.getAdornment().set(index,true);
                         }
                     }
@@ -143,7 +163,8 @@ public class RecursiveQsqEngine {
             }
         }
         AdornedTgd adornedQuery =((List<AdornedTgd>)state.adornedRules.get(q.getName())).get(0);
-        qsqrSubroutine(adornedQuery,null,state);
+        System.out.println(state);
+        //qsqrSubroutine(adornedQuery,null,state);
         return result;
     }
 

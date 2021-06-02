@@ -21,6 +21,16 @@ public class AdornedTgd {
     public List<AdornedAtom> getBody() {
         return body;
     }
+
+    public Boolean bodyHasFree() {
+        for (AdornedAtom a : body) {
+            if (a.hasFree()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Constructs an adorned tgd given an adorned atom for the head and a
      * list of adorned atoms for the body.

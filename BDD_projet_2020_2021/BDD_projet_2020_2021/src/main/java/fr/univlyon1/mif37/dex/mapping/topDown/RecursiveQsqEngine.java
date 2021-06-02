@@ -21,7 +21,7 @@ public class RecursiveQsqEngine {
         /**
          * Tracks the answer tuples generated for each adorned predicate.
          */
-        private Map<Object,Object> ans;// The final answer ?
+        private Map<Object,Object> ans;// Datas for each IDB, Map<String,List<String[]>> -> ans[IDB] = {couple of answers} -> [query] = {[x,y],[y,z]} for example
         /**
          * Tracks which input tuples have been used for each rule.
          */
@@ -140,7 +140,6 @@ public class RecursiveQsqEngine {
                 adornedRules.add(adornedRule);
                 state.adornedRules.put(q.getName(),adornedRules); //adornedRules[query] = query adornment
                 state.inputByRule.put(adornedRule,constants); //all the constants found. inputByRule[query adornment] = Dictionary variable -> constants.
-                //System.out.println(state);
             }
         }
         AdornedTgd adornedQuery =((List<AdornedTgd>)state.adornedRules.get(q.getName())).get(0);
@@ -176,11 +175,23 @@ public class RecursiveQsqEngine {
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
         System.out.println(rule);
         System.out.println(state);
-        System.out.println(rule.getBody().get(1).hasFree());
-        /*
-        for(AdornedAtom a : rule.getBody()) {
+        System.out.println(rule.bodyHasFree());
+        if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer.
+            Map<String,List<String>> inputs = (Map<String,List<String>>)state.inputByRule.get(rule);
+            AdornedAtom head = rule.getHead();
+            List<String[]> answers = new ArrayList<>();
+            for (int h = 0; h < inputs.get(((Variable)head.getAtom().getVars().toArray()[0]).getName()).size(); h++) {
+                String couple [] = new String [head.getAtom().getVars().toArray().length];
+                for(int i = 0; i < head.getAtom().getVars().toArray().length; i++) {
+                    couple[i] = inputs.get(((Variable)head.getAtom().getVars().toArray()[i]).getName()).get(h);
+                }
+                answers.add(couple);
+            }
+            state.ans.put(head.getAtom().getName(),answers);
+            for (String []s :  (List<String[]>) state.ans.get("query"))
+                System.out.println(" [ " + s[0] + " , " + s[1] + " ] ");
 
-        }*/
+        }
     }
 
     private Mapping mapping;

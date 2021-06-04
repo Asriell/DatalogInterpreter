@@ -20,5 +20,10 @@ public class Literal {
 
   public boolean containsVariable(Variable v) {
     return a.getVars().contains(v);
-  }  
+  }
+
+  @Override
+  public String toString() {
+    return a.toString();
+  }
 }

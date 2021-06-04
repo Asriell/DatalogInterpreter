@@ -167,15 +167,15 @@ public class RecursiveQsqEngine {
         qsqrSubroutine(adornedQuery,null,state);
         Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(adornedQuery);
         Map<String,List<String>> inputsQuery = inputs.get(adornedQuery.getHead().getAtom().getName());
-
-
-        Map.Entry<String,List<String>> entr = inputsQuery.entrySet().iterator().next();
-        for(int i = 0; i < inputsQuery.get(entr.getKey()).size(); i++) {
-            List<String> tuple = new ArrayList<>();
-            for (Map.Entry<String,List<String>> entry : inputsQuery.entrySet()) {
-                tuple.add(entry.getValue().get(i));
+        if (inputsQuery != null) {
+            Map.Entry<String,List<String>> entr = inputsQuery.entrySet().iterator().next();
+            for(int i = 0; i < inputsQuery.get(entr.getKey()).size(); i++) {
+                List<String> tuple = new ArrayList<>();
+                for (Map.Entry<String,List<String>> entry : inputsQuery.entrySet()) {
+                    tuple.add(entry.getValue().get(i));
+                }
+                result.add(tuple);
             }
-            result.add(tuple);
         }
         return result;
     }
@@ -191,8 +191,49 @@ public class RecursiveQsqEngine {
      * @param state
      *            current state of evaluation-wide variables
      */
-    private void qsqr(AdornedAtom p, Relation newInput, QSQRState state) {
+    private void qsqr(AdornedAtom p, Map<String,List<String>> newInput, QSQRState state) {
+        List<Tgd> unadornedRules = (List<Tgd>) state.unadornedRules.get(p.getAtom().getName());
+        for(Tgd tgd : unadornedRules) {
+            System.out.println("input : " + newInput);
+            System.out.println("tgd : " + tgd);
 
+            Atom head = tgd.getRight();
+            Collection<Literal> body = tgd.getLeft();
+            List<Boolean> adornments = new ArrayList<>();
+            for(Variable var : head.getVars()) {
+                if (newInput.containsKey(var.getName()))
+                {
+                    adornments.add(true);
+                } else {
+                    adornments.add(false);
+                }
+            }
+            AdornedAtom adornedHead = new AdornedAtom(head,adornments);
+            List<AdornedAtom> adornedBody = new ArrayList<>();
+            for(Literal literal : body) {
+                Atom atom = literal.getAtom();
+                Map<String,List<String>> inputAtom = new HashMap<>();
+                for(Variable var : atom.getVars()) {
+                    inputAtom.put(var.getName(),new ArrayList<>());
+                }
+                for(fr.univlyon1.mif37.dex.mapping.Relation edb : mapping.getEDB()) {
+                    if(atom.getName().equals(edb.getName())) {
+                        Iterator<Map.Entry<String,List<String>>> it = inputAtom.entrySet().iterator();
+                        Map.Entry<String,List<String>> entr = it.next();
+                        for(String s : edb.getAttributes()) {
+                            List<String> list = inputAtom.get(entr.getKey());
+                            list.add(s);
+                            inputAtom.put(entr.getKey(), list);
+                            if (it.hasNext()) {
+                                entr = it.next();
+                            }
+                        }
+
+                    }
+                }
+                System.out.println(inputAtom);
+            }
+        }
     }
 
     /**
@@ -206,8 +247,8 @@ public class RecursiveQsqEngine {
      *            current state of evaluation-wide variables
      */
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
+        Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule); //inputs by atoms and by variables
         if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs i, the state.
-            Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule); //inputs by atoms and by variables
             AdornedAtom head = rule.getHead();
             List<AdornedAtom> body = rule.getBody();
             Map<String,List<String>> input1 = inputs.get(body.get(0).getAtom().getName());// for the atom 0 : $x = {...], $y = {...}
@@ -306,7 +347,13 @@ public class RecursiveQsqEngine {
             rule.getHead().setAdornment(headAdornment);
         } else {
             //Top-down affectation
-            System.out.println("Build the recursion");
+            List<AdornedAtom>body = rule.getBody();
+
+            for(AdornedAtom atom : body) {
+                if(atom.hasFree()) {
+                    qsqr(atom,inputs.get(atom.getAtom().getName()),state);
+                }
+            }
         }
     }
 

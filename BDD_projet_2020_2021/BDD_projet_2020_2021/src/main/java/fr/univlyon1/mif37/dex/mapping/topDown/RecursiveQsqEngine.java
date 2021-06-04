@@ -195,7 +195,7 @@ public class RecursiveQsqEngine {
         List<Tgd> unadornedRules = (List<Tgd>) state.unadornedRules.get(p.getAtom().getName());
         List<AdornedTgd> tgds = new ArrayList<>();
         Map<String,List<String>> inputAllPredicates = new HashMap<>();
-        for(Tgd tgd : unadornedRules) {
+        for(Tgd tgd : unadornedRules) {//adornment for all unadorned rules which contains our predicate
             System.out.println("_________________________");
             System.out.println("input : " + newInput);
             System.out.println("tgd : " + tgd);
@@ -203,7 +203,7 @@ public class RecursiveQsqEngine {
             Atom head = tgd.getRight();
             Collection<Literal> body = tgd.getLeft();
             List<Boolean> adornments = new ArrayList<>();
-            for(Variable var : head.getVars()) {
+            for(Variable var : head.getVars()) { //the head first : if there are inputs relatives to the head, these variables are bound
                 if (newInput.containsKey(var.getName()))
                 {
                     adornments.add(true);
@@ -214,15 +214,15 @@ public class RecursiveQsqEngine {
             AdornedAtom adornedHead = new AdornedAtom(head,adornments);
             List<AdornedAtom> adornedBody = new ArrayList<>();
             Map<String,Map<String,List<String>>> constants = new HashMap<>();
-            //Side-ways passing information
+            //Side-ways passing information -> pass the informations to the body
             for(Literal literal : body) {
-                Atom atom = literal.getAtom();
+                Atom atom = literal.getAtom(); //for each atoms in the body...
                 Map<String,List<String>> constantsForOnePredicate = new HashMap<>();
                 for(Variable var : atom.getVars()) {
                     constantsForOnePredicate.put(var.getName(),new ArrayList<>());
                 }
                 Boolean isEdb = false;
-                for(fr.univlyon1.mif37.dex.mapping.Relation edb : mapping.getEDB()) {
+                for(fr.univlyon1.mif37.dex.mapping.Relation edb : mapping.getEDB()) { //if this atom is an edb, copy of the constants for its variables
                     if(atom.getName().equals(edb.getName())) {
                         isEdb = true;
                         Iterator<Map.Entry<String,List<String>>> it = constantsForOnePredicate.entrySet().iterator();
@@ -240,7 +240,7 @@ public class RecursiveQsqEngine {
                 }
 
 
-                List<List<String>> tmp = new ArrayList<>();
+                List<List<String>> tmp = new ArrayList<>();//change the "$x : ... $y : ... form to (...,...) form for the inputs and the atom
                 Map.Entry<String,List<String>> entr = constantsForOnePredicate.entrySet().iterator().next();
                 for(int i = 0; i < constantsForOnePredicate.get(entr.getKey()).size(); i++) {
                     List<String> elementTmp = new ArrayList<>();
@@ -262,7 +262,7 @@ public class RecursiveQsqEngine {
                     }
                     tmp2.add(elementTmp);
                 }
-                List<List<String>> tmp3 = new ArrayList<>();
+                List<List<String>> tmp3 = new ArrayList<>();  //join of the input and the edb.
                 for(List<String> list1 : tmp) {
                     for (List<String> list2 : tmp2) {
                         if (intersectsSameIndex(list1,list2)) {
@@ -270,10 +270,10 @@ public class RecursiveQsqEngine {
                         }
                     }
                 }
-                for( Map.Entry<String,List<String>> entry : constantsForOnePredicate.entrySet()) {
+                for( Map.Entry<String,List<String>> entry : constantsForOnePredicate.entrySet()) {//clear the map to update it with fusion beetween input and edb.
                     constantsForOnePredicate.put(entry.getKey(),new ArrayList<>());
                 }
-                for (int i = 0; i < tmp3.size(); i++) {
+                for (int i = 0; i < tmp3.size(); i++) {//map updating
                     int j = 0;
                     for( Map.Entry<String,List<String>> entry : constantsForOnePredicate.entrySet()) {
                         List<String> elements = constantsForOnePredicate.get(entry.getKey());
@@ -289,7 +289,7 @@ public class RecursiveQsqEngine {
                     }
                 }
 
-                if (!isEdb) {
+                if (!isEdb) {//if there are bound variables with previous edbs atoms.
                     for (Variable variable : literal.getAtom().getVars()) {
                         for (Map.Entry<String,Map<String, List<String>>> computedConstants : constants.entrySet()) {
                             if (computedConstants.getValue().containsKey(variable.getName())) {
@@ -301,7 +301,7 @@ public class RecursiveQsqEngine {
 
 
                 List <Boolean>adornment = new ArrayList<>();
-                for(Variable variable : atom.getVars()) {
+                for(Variable variable : atom.getVars()) { //computes the adornment
                     if (constantsForOnePredicate.containsKey(variable.getName())) {
                         adornment.add(true);
                     } else {
@@ -310,14 +310,14 @@ public class RecursiveQsqEngine {
                 }
                 adornedBody.add(new AdornedAtom(atom,adornment));
                 constants.put(atom.getName(),constantsForOnePredicate);
-                System.out.println(constants);
             }
             AdornedTgd adornedTgd = new AdornedTgd(adornedHead,adornedBody);
             tgds.add( adornedTgd);
             state.inputByRule.put(adornedTgd,constants);
         }
         state.adornedRules.put(p.getAtom().getName(),tgds);
-        System.out.println(state);
+        System.out.println(state.inputByRule);
+        System.out.println(state.adornedRules);
     }
 
     /**

@@ -211,6 +211,8 @@ public class RecursiveQsqEngine {
             }
             AdornedAtom adornedHead = new AdornedAtom(head,adornments);
             List<AdornedAtom> adornedBody = new ArrayList<>();
+            Map<String,Map<String,List<String>>> inputByAtom = new HashMap<>();
+            //Side-ways passing information
             for(Literal literal : body) {
                 Atom atom = literal.getAtom();
                 Map<String,List<String>> inputAtom = new HashMap<>();
@@ -241,8 +243,6 @@ public class RecursiveQsqEngine {
                     }
                     tmp.add(elementTmp);
                 }
-                System.out.println("inputAtom : " + inputAtom);
-                System.out.println("tmp : " + tmp);
                 List<List<String>>tmp2 = new ArrayList<>();
                 entr = newInput.entrySet().iterator().next();
                 for(int i = 0; i < newInput.get(entr.getKey()).size(); i++) {
@@ -256,7 +256,6 @@ public class RecursiveQsqEngine {
                     }
                     tmp2.add(elementTmp);
                 }
-                System.out.println("tmp2 : " + tmp2);
                 List<List<String>> tmp3 = new ArrayList<>();
                 for(List<String> list1 : tmp) {
                     for (List<String> list2 : tmp2) {
@@ -265,7 +264,6 @@ public class RecursiveQsqEngine {
                         }
                     }
                 }
-                System.out.println("tmp3 : " + tmp3);
                 for( Map.Entry<String,List<String>> entry : inputAtom.entrySet()) {
                     inputAtom.put(entry.getKey(),new ArrayList<>());
                 }
@@ -278,8 +276,30 @@ public class RecursiveQsqEngine {
                         j++;
                     }
                 }
-                System.out.println("input atom : " + inputAtom);
+                Map<String,List<String>>inputMapTmp = new HashMap<>(inputAtom);
+                for( Map.Entry<String,List<String>> entry : inputMapTmp.entrySet()) {
+                    if (entry.getValue().isEmpty()) {
+                        inputAtom.remove(entry.getKey());
+                    }
+                }
+
+
+                List <Boolean>adornment = new ArrayList<>();
+                for(Variable variable : atom.getVars()) {
+                    if (inputAtom.containsKey(variable.getName())) {
+                        adornment.add(true);
+                    } else {
+                        adornment.add(false);
+                    }
+                }
+                adornedBody.add(new AdornedAtom(atom,adornment));
+                inputByAtom.put(atom.getName(),inputAtom);
+                System.out.println(inputByAtom);
             }
+            AdornedTgd adornedTgd = new AdornedTgd(adornedHead,adornedBody);
+            state.adornedRules.put(head.getName(),adornedTgd);
+            state.inputByRule.put(adornedTgd,inputByAtom);
+            System.out.println(state);
         }
     }
 

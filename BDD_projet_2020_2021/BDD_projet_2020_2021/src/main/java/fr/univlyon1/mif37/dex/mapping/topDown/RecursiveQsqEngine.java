@@ -22,7 +22,7 @@ public class RecursiveQsqEngine {
         /**
          * Tracks the answer tuples generated for each adorned predicate.
          */
-        private Map<Object,Object> ans;// Datas for each IDB, Map<String,List<String[]>> -> ans[IDB] = {couple of answers} -> [query] = {[x,y],[y,z]} for example
+        private Collection<fr.univlyon1.mif37.dex.mapping.Relation> ans;// Datas for each IDB, Map<String,List<String[]>> -> ans[IDB] = {couple of answers} -> [query] = {[x,y],[y,z]} for example
         /**
          * Tracks which input tuples have been used for each rule.
          */
@@ -44,7 +44,7 @@ public class RecursiveQsqEngine {
          *            set of unadorned rules
          */
         public QSQRState(Map<Object,Object> unadornedRules) {
-            this.ans = new LinkedHashMap<>();
+            this.ans = new ArrayList<>();
             this.inputByRule = new LinkedHashMap<>();
             this.adornedRules = new LinkedHashMap<>();
             this.unadornedRules = unadornedRules;
@@ -422,14 +422,49 @@ public class RecursiveQsqEngine {
                 }
             }
 
-            inputs.put(head.getAtom().getName(),filteredAnswers);
+
+            System.out.println("FA : " + filteredAnswers);
+            Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
+            for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
+                List <String> attributes = new ArrayList<>();
+                for (Map.Entry<String,List<String>> vars : filteredAnswers.entrySet()) {
+                    attributes.add(vars.getValue().get(l));
+                }
+                Boolean add = true;
+
+                if (state.ans.size() != 0) {//to not add duplicates
+                    for (fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
+                        int index = 0;
+                        int similarities = 0;
+                        for (index = 0; index < relation.getAttributes().length; index++) {
+                            if (relation.getAttributes()[index].equals(attributes.get(index))) {
+                                similarities ++;
+                            }
+                        }
+                        if (similarities == index) {
+                            add = false;
+                        }
+                    }
+                }
+                if (add) {
+                    state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),attributes));
+                }
+            }
+
+            inputs.put(head.getAtom().getName(),filteredAnswers);//inputs updating
             state.inputByRule.put(rule,inputs);
 
             List<Boolean> headAdornment = new ArrayList<>();
             for(i = 0; i < filteredAnswers.size(); i++) {
                 headAdornment.add(true);
             }
-            rule.getHead().setAdornment(headAdornment);
+            rule.getHead().setAdornment(headAdornment);//adornment of the head updating
+
+
+
+
+            System.out.println(state);
+
         } else {
             //Top-down affectation
             List<AdornedAtom>body = rule.getBody();

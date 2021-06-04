@@ -318,6 +318,7 @@ public class RecursiveQsqEngine {
         state.adornedRules.put(p.getAtom().getName(),tgds);
         System.out.println(state.inputByRule);
         System.out.println(state.adornedRules);
+        qsqrSubroutine(tgds.get(0),null,state);
     }
 
     /**
@@ -438,6 +439,7 @@ public class RecursiveQsqEngine {
                     qsqr(atom,inputs.get(atom.getAtom().getName()),state);
                 }
             }
+            System.out.println(state);
         }
     }
 

@@ -270,8 +270,20 @@ public class RecursiveQsqEngine {
                 i++;
             }
             System.out.println("full answer : " + answers);
-            //conversion of the answer
 
+            List<String> headVars = new ArrayList<>();
+
+            for (Variable v : head.getAtom().getVars()) {
+                headVars.add(v.getName());
+            }
+            Map<String, List<String>> filteredAnswers = new HashMap<>(answers);
+            //conversion of the answer
+            for (Map.Entry<String,List<String>> entry : answers.entrySet()) {
+                if (!headVars.contains(entry.getKey())) {
+                    filteredAnswers.remove(entry.getKey());
+                }
+            }
+            System.out.println("filtered answer : " + filteredAnswers);
         } else {
             System.out.println("Build the recursion");
         }

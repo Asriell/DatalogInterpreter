@@ -61,7 +61,7 @@ public class RecursiveQsqEngine {
     /**
      *
      *
-     * Preparation of query q and retun the obtained result
+     * Preparation of query q and retun the obtained result : adornment of the body query
      *
      *
     **/
@@ -194,95 +194,111 @@ public class RecursiveQsqEngine {
      *            current state of evaluation-wide variables
      */
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
-        if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs.
+        if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs i, the state.
             Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule);
             AdornedAtom head = rule.getHead();
             List<AdornedAtom> body = rule.getBody();
-            List<List<String>> answers = new ArrayList<>();
-            Map<String,List<String>> fusion = new HashMap<>(inputs.get(body.get(0).getAtom().getName()));
-            for(int i = 1; i < inputs.size(); i++) {
-                Map<String, List<String>> element= inputs.get(body.get(i).getAtom().getName()); //inputs for the i-th atom.
-                List<String> elementKeys = new ArrayList<>();
-                for (Map.Entry<String,List<String>> entry : element.entrySet()) {
-                    elementKeys.add(entry.getKey());
-                }
-                List<String> fusionKeys = new ArrayList<>();
-                for (Map.Entry<String,List<String>> entry : fusion.entrySet()) {
-                    fusionKeys.add(entry.getKey());
-                }
-
-                for(String s : elementKeys) {
-                    if(!fusion.containsKey(s)) {
-                        List<String> newColumn = new ArrayList<>();
-                        Map.Entry<String,List<String>> entry = fusion.entrySet().iterator().next();
-                        for(int j = 0; j < entry.getValue().size();j++) {
-                            newColumn.add("");
-                        }
-                        fusion.put(s,newColumn);
-                    }
-                }
-                for(String s : fusionKeys) {
-                    if(!element.containsKey(s)) {
-                        List<String> newColumn = new ArrayList<>();
-                        Map.Entry<String,List<String>> entry = element.entrySet().iterator().next();
-                        for(int j = 0; j < entry.getValue().size();j++) {
-                            newColumn.add("");
-                        }
-                        element.put(s,newColumn);
-                    }
-                }
-                for (Map.Entry<String,List<String>> entry : fusion.entrySet()) {
-                    fusionKeys.add(entry.getKey());
-                }
-                elementKeys = fusionKeys;
-                int minElement = Integer.min(fusion.get(fusionKeys.get(0)).size(),element.get(elementKeys.get(0)).size());
-                Map<String, List<String>> minMap;
-                Map<String, List<String>> otherMap;
-                if (fusion.get(fusionKeys.get(0)).size() <= element.get(elementKeys.get(0)).size()) {
-                    minMap = fusion;
-                    otherMap = element;
-                } else {
-                    minMap = element;
-                    otherMap = fusion;
-                }
-                System.out.println(fusion);
-                System.out.println(element);
-                for(int j =  0; j < minElement; j++) {
-                    Boolean hasChanged = false;
-                    int indexValuesMin = 0;
-                    for(String s : fusionKeys) {
-                        if (minMap.get(s).get(j).equals("")) {
-                            List<String> newList = minMap.get(s);
-                            List<String> variables = new ArrayList<>();
-                            List<String> Line = new ArrayList<>();
-                            for (String s2 : fusionKeys) {
-                                if (!minMap.get(s2).get(j).equals("")) {
-                                    Line.add(minMap.get(s2).get(j));
-                                    variables.add(s2);
-                                }
-                            }
-                            for (int k = 0; k < otherMap.get(s).size(); k++)  {
-                                if(otherMap.get(variables.get(0)).get(k).equals(Line.get(0))) {
-                                    newList.set(j,otherMap.get(s).get(k));
-                                    minMap.put(s,newList);
-                                }
-
-                            }
-                            hasChanged = true;
-                        }
-                        indexValuesMin ++;
-                    }
-                    if (!hasChanged) {
-                        minMap.remove(j);
-                    }
-                }
-                fusion = minMap;
-                System.out.println(fusion);
-
+            Map<String,List<String>> input1 = inputs.get(body.get(0).getAtom().getName());// for the atom 0 : $x = {...], $y = {...}
+            Map<String,List<String>> input2 = inputs.get(body.get(1).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
+            List<List<String>> couplesInput1 = new ArrayList<>();//for the atom 0 : ((x1,y1),(x2,y2),...)
+            List<List<String>> couplesInput2 = new ArrayList<>();//for the atom 1 : ((x1,y1),(x2,y2),...)
+            List<String> variablesInput1 = new ArrayList<>();//for the atom 0 : ($x,$y,...)
+            for (Map.Entry<String,List<String>> entry : input1.entrySet()) {
+                variablesInput1.add(entry.getKey());
             }
+            List<String> variablesInput2 = new ArrayList<>();//for the atom 1 : ($x,$y,...)
+            for (Map.Entry<String,List<String>> entry : input2.entrySet()) {
+                variablesInput2.add(entry.getKey());
+            }
+            List<String> commonVars = new ArrayList<>(variablesInput1); //union of both
+            for(String s : variablesInput2) {
+                if(!commonVars.contains(s)) {
+                    commonVars.add(s);
+                }
+            }
+            Collections.sort(commonVars);
+            Map.Entry<String,List<String>> entr = input1.entrySet().iterator().next();//converts to the same form (($x,"") for atom 1 if only has $x but atom 2 has ($x,$y)) and put in couplesInput1
+            for(int i = 0; i < input1.get(entr.getKey()).size(); i++) {
+                List<String> vals = new ArrayList<>();
+                for (String s : commonVars)  {
+                    if (input1.containsKey(s)) {
+                        vals.add(input1.get(s).get(i));
+                    } else {
+                        vals.add("");
+                    }
+                }
+                couplesInput1.add(vals);
+            }
+
+            entr = input2.entrySet().iterator().next();//same than couplesInput1
+            for(int i = 0; i < input2.get(entr.getKey()).size(); i++) {
+                List<String> vals = new ArrayList<>();
+                for (String s : commonVars)  {
+                    if (input2.containsKey(s)) {
+                        vals.add(input2.get(s).get(i));
+                    } else {
+                        vals.add("");
+                    }
+                }
+                couplesInput2.add(vals);
+            }
+            System.out.println(couplesInput1);
+            System.out.println(couplesInput2);
+
+
+            List<List<String>> answersArray = new ArrayList<>();//answer = union(intersect(atoms))
+            for(List<String> inputs1: couplesInput1) {
+                for(List<String> inputs2 : couplesInput2) {
+                    if (intersectsSameIndex(inputs1,inputs2)) {
+                        answersArray.add(unionTwoArrays(inputs1,inputs2));
+                    }
+                }
+            }
+
+            System.out.println(answersArray);
+            Map<String,List<String>> answers = new HashMap<>();
+            int i = 0;
+            for(String s : commonVars) {
+                for(List<String> tuple : answersArray) {
+                    if (!answers.containsKey(s)) {
+                        answers.put(s,new ArrayList<String>());
+                    }
+                    List<String> tmp = answers.get(s);
+                    tmp.add(tuple.get(i));//add the new constant to the constants set of a given variable
+                    answers.put(s,tmp);
+                }
+                i++;
+            }
+            System.out.println(answers);
+            //conversion of the answer
+
         } else {
             System.out.println("Build the recursion");
         }
+    }
+
+    private Boolean intersectsSameIndex(List<String>array1,List<String>array2) {
+        int i = 0;
+        for(String s : array1) {
+            if (s.equals(array2.get(i))) {
+                return true;
+            }
+            i++;
+        }
+        return false;
+    }
+
+    private List<String> unionTwoArrays(List<String>array1,List<String>array2) {
+        List<String> result = new ArrayList<>(array1);
+        int i = 0;
+        for(String s : result) {
+            if(s.equals("")) {
+                //System.out.println(array2.get(i));
+                result.set(i,array2.get(i));
+            }
+            i++;
+        }
+        return result;
     }
 
     private Mapping mapping;

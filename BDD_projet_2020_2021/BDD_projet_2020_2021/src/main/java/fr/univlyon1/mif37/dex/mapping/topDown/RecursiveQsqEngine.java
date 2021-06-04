@@ -207,12 +207,16 @@ public class RecursiveQsqEngine {
      */
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
         if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs i, the state.
-            System.out.println("state inputs before evaluation : " + state);
             Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule); //inputs by atoms and by variables
             AdornedAtom head = rule.getHead();
             List<AdornedAtom> body = rule.getBody();
             Map<String,List<String>> input1 = inputs.get(body.get(0).getAtom().getName());// for the atom 0 : $x = {...], $y = {...}
-            Map<String,List<String>> input2 = inputs.get(body.get(1).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
+            Map<String,List<String>> input2;
+            if (body.size()>1) {
+                input2 = inputs.get(body.get(1).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
+            } else {
+                input2 = input1;
+            }
             List<List<String>> couplesInput1 = new ArrayList<>();//for the atom 0 : ((x1,y1),(x2,y2),...)
             List<List<String>> couplesInput2 = new ArrayList<>();//for the atom 1 : ((x1,y1),(x2,y2),...)
             List<String> variablesInput1 = new ArrayList<>();//for the atom 0 : ($x,$y,...)
@@ -255,9 +259,6 @@ public class RecursiveQsqEngine {
                 }
                 couplesInput2.add(vals);
             }
-            System.out.println(couplesInput1);
-            System.out.println(couplesInput2);
-
 
             List<List<String>> answersArray = new ArrayList<>();//answer = union(intersect(atoms))
             for(List<String> inputs1: couplesInput1) {
@@ -268,7 +269,6 @@ public class RecursiveQsqEngine {
                 }
             }
 
-            System.out.println("answer as array : " + answersArray);
             Map<String,List<String>> answers = new HashMap<>();
             int i = 0;
             for(String s : commonVars) {
@@ -282,7 +282,6 @@ public class RecursiveQsqEngine {
                 }
                 i++;
             }
-            System.out.println("full answer : " + answers);
 
             List<String> headVars = new ArrayList<>();
 
@@ -296,7 +295,7 @@ public class RecursiveQsqEngine {
                     filteredAnswers.remove(entry.getKey());
                 }
             }
-            System.out.println("filtered answer : " + filteredAnswers);
+
             inputs.put(head.getAtom().getName(),filteredAnswers);
             state.inputByRule.put(rule,inputs);
 
@@ -305,8 +304,8 @@ public class RecursiveQsqEngine {
                 headAdornment.add(true);
             }
             rule.getHead().setAdornment(headAdornment);
-            System.out.println("state after evaluation : " + state);
         } else {
+            //Top-down affectation
             System.out.println("Build the recursion");
         }
     }

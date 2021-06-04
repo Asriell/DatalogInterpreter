@@ -41,6 +41,9 @@ public class AdornedAtom {
     public List<Boolean> getAdornment() {
         return adornment;
     }
+    public void setAdornment(List<Boolean> _adornment) {
+        adornment = _adornment;
+    }
 
     public int getBound() {
         return bound;

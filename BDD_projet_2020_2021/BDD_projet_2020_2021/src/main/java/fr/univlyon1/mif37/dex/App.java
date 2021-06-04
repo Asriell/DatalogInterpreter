@@ -49,6 +49,9 @@ public class App {
             }
         }*/
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
-        engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight());
+        System.out.println(
+                "Query answer : " +
+                engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight())
+        );
     }
 }

@@ -165,6 +165,18 @@ public class RecursiveQsqEngine {
         }
         AdornedTgd adornedQuery =((List<AdornedTgd>)state.adornedRules.get(q.getName())).get(0);
         qsqrSubroutine(adornedQuery,null,state);
+        Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(adornedQuery);
+        Map<String,List<String>> inputsQuery = inputs.get(adornedQuery.getHead().getAtom().getName());
+
+
+        Map.Entry<String,List<String>> entr = inputsQuery.entrySet().iterator().next();
+        for(int i = 0; i < inputsQuery.get(entr.getKey()).size(); i++) {
+            List<String> tuple = new ArrayList<>();
+            for (Map.Entry<String,List<String>> entry : inputsQuery.entrySet()) {
+                tuple.add(entry.getValue().get(i));
+            }
+            result.add(tuple);
+        }
         return result;
     }
 
@@ -195,7 +207,8 @@ public class RecursiveQsqEngine {
      */
     private void qsqrSubroutine(AdornedTgd rule, Relation newInput, QSQRState state) {
         if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs i, the state.
-            Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule);
+            System.out.println("state inputs before evaluation : " + state);
+            Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule); //inputs by atoms and by variables
             AdornedAtom head = rule.getHead();
             List<AdornedAtom> body = rule.getBody();
             Map<String,List<String>> input1 = inputs.get(body.get(0).getAtom().getName());// for the atom 0 : $x = {...], $y = {...}
@@ -284,6 +297,15 @@ public class RecursiveQsqEngine {
                 }
             }
             System.out.println("filtered answer : " + filteredAnswers);
+            inputs.put(head.getAtom().getName(),filteredAnswers);
+            state.inputByRule.put(rule,inputs);
+
+            List<Boolean> headAdornment = new ArrayList<>();
+            for(i = 0; i < filteredAnswers.size(); i++) {
+                headAdornment.add(true);
+            }
+            rule.getHead().setAdornment(headAdornment);
+            System.out.println("state after evaluation : " + state);
         } else {
             System.out.println("Build the recursion");
         }

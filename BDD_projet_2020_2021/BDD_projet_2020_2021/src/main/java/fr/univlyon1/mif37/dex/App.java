@@ -18,7 +18,7 @@ public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) throws Exception {
-        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple2.txt"));
+        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple4.txt"));
         Mapping mapping = mp.mapping();
         /*
         LOG.info("\n"+mapping.toString());

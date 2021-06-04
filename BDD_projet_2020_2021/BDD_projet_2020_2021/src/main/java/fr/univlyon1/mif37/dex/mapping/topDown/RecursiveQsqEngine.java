@@ -255,7 +255,7 @@ public class RecursiveQsqEngine {
                 }
             }
 
-            System.out.println(answersArray);
+            System.out.println("answer as array : " + answersArray);
             Map<String,List<String>> answers = new HashMap<>();
             int i = 0;
             for(String s : commonVars) {
@@ -269,7 +269,7 @@ public class RecursiveQsqEngine {
                 }
                 i++;
             }
-            System.out.println(answers);
+            System.out.println("full answer : " + answers);
             //conversion of the answer
 
         } else {

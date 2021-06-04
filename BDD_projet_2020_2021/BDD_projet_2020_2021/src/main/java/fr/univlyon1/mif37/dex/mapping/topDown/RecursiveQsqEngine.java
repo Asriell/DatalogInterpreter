@@ -194,6 +194,7 @@ public class RecursiveQsqEngine {
     private void qsqr(AdornedAtom p, Map<String,List<String>> newInput, QSQRState state) {
         List<Tgd> unadornedRules = (List<Tgd>) state.unadornedRules.get(p.getAtom().getName());
         for(Tgd tgd : unadornedRules) {
+            System.out.println("_________________________");
             System.out.println("input : " + newInput);
             System.out.println("tgd : " + tgd);
 
@@ -231,7 +232,53 @@ public class RecursiveQsqEngine {
 
                     }
                 }
-                System.out.println(inputAtom);
+                List<List<String>> tmp = new ArrayList<>();
+                Map.Entry<String,List<String>> entr = inputAtom.entrySet().iterator().next();
+                for(int i = 0; i < inputAtom.get(entr.getKey()).size(); i++) {
+                    List<String> elementTmp = new ArrayList<>();
+                    for( Map.Entry<String,List<String>> entry : inputAtom.entrySet()) {
+                        elementTmp.add(inputAtom.get(entry.getKey()).get(i));
+                    }
+                    tmp.add(elementTmp);
+                }
+                System.out.println("inputAtom : " + inputAtom);
+                System.out.println("tmp : " + tmp);
+                List<List<String>>tmp2 = new ArrayList<>();
+                entr = newInput.entrySet().iterator().next();
+                for(int i = 0; i < newInput.get(entr.getKey()).size(); i++) {
+                    List<String> elementTmp = new ArrayList<>();
+                    for( Map.Entry<String,List<String>> entry : inputAtom.entrySet()) {
+                        if (newInput.containsKey(entry.getKey())) {
+                            elementTmp.add(newInput.get(entry.getKey()).get(i));
+                        } else {
+                            elementTmp.add("");
+                        }
+                    }
+                    tmp2.add(elementTmp);
+                }
+                System.out.println("tmp2 : " + tmp2);
+                List<List<String>> tmp3 = new ArrayList<>();
+                for(List<String> list1 : tmp) {
+                    for (List<String> list2 : tmp2) {
+                        if (intersectsSameIndex(list1,list2)) {
+                            tmp3.add(unionTwoArrays(list1,list2));
+                        }
+                    }
+                }
+                System.out.println("tmp3 : " + tmp3);
+                for( Map.Entry<String,List<String>> entry : inputAtom.entrySet()) {
+                    inputAtom.put(entry.getKey(),new ArrayList<>());
+                }
+                for (int i = 0; i < tmp3.size(); i++) {
+                    int j = 0;
+                    for( Map.Entry<String,List<String>> entry : inputAtom.entrySet()) {
+                        List<String> elements = inputAtom.get(entry.getKey());
+                        elements.add(tmp3.get(i).get(j));
+                        inputAtom.put(entry.getKey(),elements);
+                        j++;
+                    }
+                }
+                System.out.println("input atom : " + inputAtom);
             }
         }
     }

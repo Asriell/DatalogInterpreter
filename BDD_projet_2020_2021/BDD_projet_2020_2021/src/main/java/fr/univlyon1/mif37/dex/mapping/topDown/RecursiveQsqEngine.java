@@ -79,7 +79,6 @@ public class RecursiveQsqEngine {
             }
         }
         QSQRState state = new QSQRState(unadornedRules);
-        //System.out.println(state);
 
 
 
@@ -95,7 +94,6 @@ public class RecursiveQsqEngine {
                     booleans.add(false); //Before resolution, query has no bound variable.
                 }
                 AdornedAtom head = new AdornedAtom(q,booleans);
-                //System.out.println(head);
                 List<AdornedAtom> body = new ArrayList<>();
                 for (int i = 0; i < tgd.getLeft().size(); i++) {
                     Map<String,List<String>> constantsForOnePredicate = new HashMap<>(); //constants[parameter] = value
@@ -197,7 +195,6 @@ public class RecursiveQsqEngine {
         Map<String,List<String>> inputAllPredicates = new HashMap<>();
         for(Tgd tgd : unadornedRules) {//adornment for all unadorned rules which contains our predicate
 
-
             Atom head = tgd.getRight();
             Collection<Literal> body = tgd.getLeft();
             List<Boolean> adornments = new ArrayList<>();
@@ -237,6 +234,16 @@ public class RecursiveQsqEngine {
                     }
                 }
 
+
+                if (!isEdb) {//if there are bound variables with previous edbs atoms.
+                    for (Variable variable : literal.getAtom().getVars()) {
+                        for (Map.Entry<String,Map<String, List<String>>> computedConstants : constants.entrySet()) {
+                            if (computedConstants.getValue().containsKey(variable.getName())) {
+                                constantsForOnePredicate.put(variable.getName(),computedConstants.getValue().get(variable.getName()));
+                            }
+                        }
+                    }
+                }
 
                 List<List<String>> tmp = new ArrayList<>();//change the "$x : ... $y : ... form to (...,...) form for the inputs and the atom
                 Map.Entry<String,List<String>> entr = constantsForOnePredicate.entrySet().iterator().next();
@@ -288,27 +295,42 @@ public class RecursiveQsqEngine {
                     }
                 }
 
-                if (!isEdb) {//if there are bound variables with previous edbs atoms.
-                    for (Variable variable : literal.getAtom().getVars()) {
-                        for (Map.Entry<String,Map<String, List<String>>> computedConstants : constants.entrySet()) {
-                            if (computedConstants.getValue().containsKey(variable.getName())) {
-                                constantsForOnePredicate.put(variable.getName(),computedConstants.getValue().get(variable.getName()));
-                            }
-                        }
-                    }
-                }
 
-
+                constants.put(atom.getName(),constantsForOnePredicate);
                 List <Boolean>adornment = new ArrayList<>();
                 for(Variable variable : atom.getVars()) { //computes the adornment
                     if (constantsForOnePredicate.containsKey(variable.getName())) {
                         adornment.add(true);
                     } else {
-                        adornment.add(false);
+                        Boolean isFinallyBound = false;
+                        for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
+                            if (entry.getValue().containsKey(variable.getName()) && !constantsForOnePredicate.containsKey(variable.getName())) {
+                                constantsForOnePredicate.put(variable.getName(), entry.getValue().get(variable.getName()));
+                                adornment.add(true);
+                                isFinallyBound = true;
+                            }
+                        }
+                        if (!isFinallyBound)
+                            adornment.add(false);
                     }
                 }
                 adornedBody.add(new AdornedAtom(atom,adornment));
-                constants.put(atom.getName(),constantsForOnePredicate);
+            }
+
+            for (AdornedAtom atom : adornedBody) {
+                Map<String,List<String>> constantsForOnePredicate = constants.get(atom.getAtom().getName());
+                int i = 0;
+                for(Variable variable : atom.getAtom().getVars()) {
+                    if (! constantsForOnePredicate.containsKey(variable.getName()))  {
+                        for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
+                            if (entry.getValue().containsKey(variable.getName()) && !constantsForOnePredicate.containsKey(variable.getName())) {
+                                constantsForOnePredicate.put(variable.getName(), entry.getValue().get(variable.getName()));
+                                atom.getAdornment().set(i,true);
+                            }
+                        }
+                    }
+                    i++;
+                }
             }
             AdornedTgd adornedTgd = new AdornedTgd(adornedHead,adornedBody);
             tgds.add( adornedTgd);
@@ -471,7 +493,6 @@ public class RecursiveQsqEngine {
                     }
                 }
             }
-            System.out.println(state);
         } else {
             //Top-down information passing : we look for all free variables in our IDB, on the head of tcgs.
             List<AdornedAtom>body = rule.getBody();

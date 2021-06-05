@@ -18,36 +18,9 @@ public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) throws Exception {
-        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple1.txt"));
+        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple5.txt"));
         Mapping mapping = mp.mapping();
-        /*
-        LOG.info("\n"+mapping.toString());
-        LOG.info("Parsed {} edb(s), {} idb(s) and {} tgd(s).",
-                mapping.getEDB().size(),
-                mapping.getIDB().size(),
-                mapping.getTgds().size());
-         */
-        //System.out.println(Arrays.stream(((Literal)((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getLeft().toArray()[0]).getAtom().getArgs()).toArray()[1]);
-        /*
-        List<Boolean> bools = new ArrayList<Boolean>();
-        bools.add(Boolean.TRUE);
-        bools.add(Boolean.FALSE);
-        AdornedAtom at = new AdornedAtom(   ((Literal)((Tgd) mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getLeft().toArray()[1]).getAtom(), bools);
-         */
 
-        /*
-        for (Tgd tgd : mapping.getTgds()) {
-            for(Literal l : tgd.getLeft()) {
-                Atom a = l.getAtom();
-                if (a.getArgs().length == 1) {
-                    for(Relation edb : mapping.getEDB()) {
-                        if (a.getName().equals(edb.getName())) {
-                            System.out.println(edb.getAttributes()[0]);
-                        }
-                    }
-                }
-            }
-        }*/
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
         System.out.println(
                 "Query answer : " +

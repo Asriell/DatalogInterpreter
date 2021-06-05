@@ -468,8 +468,7 @@ public class RecursiveQsqEngine {
                     }
                 }
             }
-
-
+            System.out.println(state);
         } else {
             //Top-down information passing : we look for all free variables in our IDB, on the head of tcgs.
             List<AdornedAtom>body = rule.getBody();
@@ -498,8 +497,6 @@ public class RecursiveQsqEngine {
                 }
             }
             qsqrSubroutine(rule,null,state);
-            System.out.println("Answers  : " + state.ans);
-            System.out.println("Inputs after Topdown Techniques : " + state.inputByRule);
         }
     }
 

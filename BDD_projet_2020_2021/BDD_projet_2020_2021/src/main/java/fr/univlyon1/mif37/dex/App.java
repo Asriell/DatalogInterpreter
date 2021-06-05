@@ -22,9 +22,15 @@ public class App {
         Mapping mapping = mp.mapping();
 
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
+        List<Object> answer = engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight());
         System.out.println(
                 "Query answer : " +
-                engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight())
+                answer.get(0) +
+                        "\nQuery subgoals : " +
+                        answer.get(1) +
+                        "\nAll details : " +
+                        answer.get(2)
+
         );
     }
 }

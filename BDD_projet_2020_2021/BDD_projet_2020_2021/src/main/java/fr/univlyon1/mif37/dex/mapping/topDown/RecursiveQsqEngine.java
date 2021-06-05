@@ -336,90 +336,93 @@ public class RecursiveQsqEngine {
             List<AdornedAtom> body = rule.getBody();
             Map<String,List<String>> input1 = inputs.get(body.get(0).getAtom().getName());// for the atom 0 : $x = {...], $y = {...}
             Map<String,List<String>> input2;
-            if (body.size()>1) {
-                input2 = inputs.get(body.get(1).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
-            } else {
-                input2 = input1;
-            }
-            List<List<String>> couplesInput1 = new ArrayList<>();//for the atom 0 : ((x1,y1),(x2,y2),...)
-            List<List<String>> couplesInput2 = new ArrayList<>();//for the atom 1 : ((x1,y1),(x2,y2),...)
-            List<String> variablesInput1 = new ArrayList<>();//for the atom 0 : ($x,$y,...)
-            for (Map.Entry<String,List<String>> entry : input1.entrySet()) {
-                variablesInput1.add(entry.getKey());
-            }
-            List<String> variablesInput2 = new ArrayList<>();//for the atom 1 : ($x,$y,...)
-            for (Map.Entry<String,List<String>> entry : input2.entrySet()) {
-                variablesInput2.add(entry.getKey());
-            }
-            List<String> commonVars = new ArrayList<>(variablesInput1); //union of both
-            for(String s : variablesInput2) {
-                if(!commonVars.contains(s)) {
-                    commonVars.add(s);
+            Map<String, List<String>> filteredAnswers = new HashMap<>();
+            for (int indexAtoms = 0; indexAtoms < body.size(); indexAtoms++) {
+                if (indexAtoms >= 1) {
+                    input2 = inputs.get(body.get(indexAtoms).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
+                } else {
+                    input2 = input1;
                 }
-            }
-            Collections.sort(commonVars);
-            Map.Entry<String,List<String>> entr = input1.entrySet().iterator().next();//converts to the same form (($x,"") for atom 1 if only has $x but atom 2 has ($x,$y)) and put in couplesInput1
-            for(int i = 0; i < input1.get(entr.getKey()).size(); i++) {
-                List<String> vals = new ArrayList<>();
-                for (String s : commonVars)  {
-                    if (input1.containsKey(s)) {
-                        vals.add(input1.get(s).get(i));
-                    } else {
-                        vals.add("");
+                List<List<String>> couplesInput1 = new ArrayList<>();//for the atom 0 : ((x1,y1),(x2,y2),...)
+                List<List<String>> couplesInput2 = new ArrayList<>();//for the atom 1 : ((x1,y1),(x2,y2),...)
+                List<String> variablesInput1 = new ArrayList<>();//for the atom 0 : ($x,$y,...)
+                for (Map.Entry<String, List<String>> entry : input1.entrySet()) {
+                    variablesInput1.add(entry.getKey());
+                }
+                List<String> variablesInput2 = new ArrayList<>();//for the atom 1 : ($x,$y,...)
+                for (Map.Entry<String, List<String>> entry : input2.entrySet()) {
+                    variablesInput2.add(entry.getKey());
+                }
+                List<String> commonVars = new ArrayList<>(variablesInput1); //union of both
+                for (String s : variablesInput2) {
+                    if (!commonVars.contains(s)) {
+                        commonVars.add(s);
                     }
                 }
-                couplesInput1.add(vals);
-            }
+                Collections.sort(commonVars);
+                Map.Entry<String, List<String>> entr = input1.entrySet().iterator().next();//converts to the same form (($x,"") for atom 1 if only has $x but atom 2 has ($x,$y)) and put in couplesInput1
+                for (int i = 0; i < input1.get(entr.getKey()).size(); i++) {
+                    List<String> vals = new ArrayList<>();
+                    for (String s : commonVars) {
+                        if (input1.containsKey(s)) {
+                            vals.add(input1.get(s).get(i));
+                        } else {
+                            vals.add("");
+                        }
+                    }
+                    couplesInput1.add(vals);
+                }
 
-            entr = input2.entrySet().iterator().next();//same than couplesInput1
-            for(int i = 0; i < input2.get(entr.getKey()).size(); i++) {
-                List<String> vals = new ArrayList<>();
-                for (String s : commonVars)  {
-                    if (input2.containsKey(s)) {
-                        vals.add(input2.get(s).get(i));
-                    } else {
-                        vals.add("");
+                entr = input2.entrySet().iterator().next();//same than couplesInput1
+                for (int i = 0; i < input2.get(entr.getKey()).size(); i++) {
+                    List<String> vals = new ArrayList<>();
+                    for (String s : commonVars) {
+                        if (input2.containsKey(s)) {
+                            vals.add(input2.get(s).get(i));
+                        } else {
+                            vals.add("");
+                        }
+                    }
+                    couplesInput2.add(vals);
+                }
+
+                List<List<String>> answersArray = new ArrayList<>();//answer = union(intersect(atoms))
+                for (List<String> inputs1 : couplesInput1) {
+                    for (List<String> inputs2 : couplesInput2) {
+                        if (intersectsSameIndex(inputs1, inputs2)) {
+                            answersArray.add(unionTwoArrays(inputs1, inputs2));
+                        }
                     }
                 }
-                couplesInput2.add(vals);
-            }
 
-            List<List<String>> answersArray = new ArrayList<>();//answer = union(intersect(atoms))
-            for(List<String> inputs1: couplesInput1) {
-                for(List<String> inputs2 : couplesInput2) {
-                    if (intersectsSameIndex(inputs1,inputs2)) {
-                        answersArray.add(unionTwoArrays(inputs1,inputs2));
+                Map<String, List<String>> answers = new HashMap<>();
+                int i = 0;
+                for (String s : commonVars) {
+                    for (List<String> tuple : answersArray) {
+                        if (!answers.containsKey(s)) {
+                            answers.put(s, new ArrayList<String>());
+                        }
+                        List<String> tmp = answers.get(s);
+                        tmp.add(tuple.get(i));//add the new constant to the constants set of a given variable
+                        answers.put(s, tmp);
+                    }
+                    i++;
+                }
+
+                List<String> headVars = new ArrayList<>();
+
+                for (Variable v : head.getAtom().getVars()) {
+                    headVars.add(v.getName());
+                }
+                filteredAnswers = new HashMap<>(answers);
+                //conversion of the answer
+                for (Map.Entry<String, List<String>> entry : answers.entrySet()) {
+                    if (!headVars.contains(entry.getKey())) {
+                        filteredAnswers.remove(entry.getKey());
                     }
                 }
+                input1 = answers;
             }
-
-            Map<String,List<String>> answers = new HashMap<>();
-            int i = 0;
-            for(String s : commonVars) {
-                for(List<String> tuple : answersArray) {
-                    if (!answers.containsKey(s)) {
-                        answers.put(s,new ArrayList<String>());
-                    }
-                    List<String> tmp = answers.get(s);
-                    tmp.add(tuple.get(i));//add the new constant to the constants set of a given variable
-                    answers.put(s,tmp);
-                }
-                i++;
-            }
-
-            List<String> headVars = new ArrayList<>();
-
-            for (Variable v : head.getAtom().getVars()) {
-                headVars.add(v.getName());
-            }
-            Map<String, List<String>> filteredAnswers = new HashMap<>(answers);
-            //conversion of the answer
-            for (Map.Entry<String,List<String>> entry : answers.entrySet()) {
-                if (!headVars.contains(entry.getKey())) {
-                    filteredAnswers.remove(entry.getKey());
-                }
-            }
-
             Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
             for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
                 List <String> attributes = new ArrayList<>();
@@ -433,7 +436,7 @@ public class RecursiveQsqEngine {
                         int index = 0;
                         int similarities = 0;
                         for (index = 0; index < relation.getAttributes().length; index++) {
-                            if (attributes.size() < index){
+                            if (attributes.size() > index){
                                 if (relation.getAttributes()[index].equals(attributes.get(index))) {
                                     similarities ++;
                                 }
@@ -453,7 +456,7 @@ public class RecursiveQsqEngine {
             state.inputByRule.put(rule,inputs);
 
             List<Boolean> headAdornment = new ArrayList<>();
-            for(i = 0; i < filteredAnswers.size(); i++) {
+            for(int i = 0; i < filteredAnswers.size(); i++) {
                 headAdornment.add(true);
             }
             rule.getHead().setAdornment(headAdornment);//adornment of the head updating

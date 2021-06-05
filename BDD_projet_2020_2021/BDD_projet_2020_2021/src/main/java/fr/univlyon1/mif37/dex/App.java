@@ -18,13 +18,19 @@ public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) throws Exception {
-        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple5.txt"));
+        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple1.txt"));
         Mapping mapping = mp.mapping();
 
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
+        List<Object> answer = engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight());
         System.out.println(
                 "Query answer : " +
-                engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight())
+                answer.get(0) +
+                        "\nQuery subgoals : " +
+                        answer.get(1) +
+                        "\nAll details : " +
+                        answer.get(2)
+
         );
     }
 }

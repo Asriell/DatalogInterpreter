@@ -18,11 +18,12 @@ public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) throws Exception {
+        long initialTime = System.currentTimeMillis();
         MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple1.txt"));
         Mapping mapping = mp.mapping();
-
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
         List<Object> answer = engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight());
+        long executionTime = System.currentTimeMillis()-initialTime;
         System.out.println(
                 "Query answer : " +
                 answer.get(0) +
@@ -32,5 +33,6 @@ public class App {
                         answer.get(2)
 
         );
+        System.out.println("execution time : " + executionTime/1000.0 + " seconds");
     }
 }

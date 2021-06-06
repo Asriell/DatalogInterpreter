@@ -19,7 +19,7 @@ public class App {
 
     public static void main(String[] args) throws Exception {
         long initialTime = System.currentTimeMillis();
-        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple5.txt"));
+        MappingParser mp = new MappingParser(App.class.getResourceAsStream("/exemple1.txt"));
         Mapping mapping = mp.mapping();
         RecursiveQsqEngine engine = new RecursiveQsqEngine(mapping);
         List<Object> answer = engine.query(((Tgd)mapping.getTgds().toArray()[mapping.getTgds().size()-1]).getRight());

@@ -64,7 +64,7 @@ public class RecursiveQsqEngine {
     /**
      *
      *
-     * Preparation of query q and retun the obtained result : adornment of the body query
+     * Preparation of query q and retun the obtained result : adornment of the body of the query
      *
      *
     **/
@@ -196,7 +196,7 @@ public class RecursiveQsqEngine {
      */
     private void qsqr(AdornedAtom p, Map<String,List<String>> newInput, QSQRState state) {
 
-        List<List<String>> newInputList = new ArrayList<>();
+        List<List<String>> newInputList = new ArrayList<>();//Conversion of the inputs as a list (to make operations more simple)
         Map.Entry<String,List<String>> firstIndexInput = newInput.entrySet().iterator().next();
         for (int i = 0; i < newInput.get(firstIndexInput.getKey()).size(); i++) {
             List<String> line = new ArrayList<>();
@@ -287,7 +287,7 @@ public class RecursiveQsqEngine {
                         }
                     }
                 }
-                for( Map.Entry<String,List<String>> entry : constantsForOnePredicate.entrySet()) {//clear the map to update it with fusion beetween input and edb.
+                for( Map.Entry<String,List<String>> entry : constantsForOnePredicate.entrySet()) {//clear the map to update it with fusion beetween input and edb (Above).
                     constantsForOnePredicate.put(entry.getKey(),new ArrayList<>());
                 }
                 for (int i = 0; i < tmp3.size(); i++) {//map updating
@@ -309,17 +309,17 @@ public class RecursiveQsqEngine {
 
                 constants.put(atom.getName(),constantsForOnePredicate);
 
-                if (isEdb && constantsForOnePredicate.isEmpty()) {//contradition
+                if (isEdb && constantsForOnePredicate.isEmpty()) {//contradition -> useless to continue
                     return;
                 }
 
                 List <Boolean>adornment = new ArrayList<>();
                 for(Variable variable : atom.getVars()) { //computes the adornment
-                    if (constantsForOnePredicate.containsKey(variable.getName()) || isEdb) {
+                    if (constantsForOnePredicate.containsKey(variable.getName()) || isEdb) {//if a variable has a constants, this variable is bound.
                         adornment.add(true);
                     } else {
                         Boolean isFinallyBound = false;
-                        for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {
+                        for (Map.Entry<String,Map<String,List<String>>> entry : constants.entrySet()) {//if the variable is bound in another atom, this variable is bound.
                             if (entry.getValue().containsKey(variable.getName()) && !constantsForOnePredicate.containsKey(variable.getName())) {
                                 constantsForOnePredicate.put(variable.getName(), entry.getValue().get(variable.getName()));
                                 adornment.add(true);
@@ -334,7 +334,7 @@ public class RecursiveQsqEngine {
                 adornedBody.add(new AdornedAtom(atom,adornment));
             }
 
-            for (AdornedAtom atom : adornedBody) {
+            for (AdornedAtom atom : adornedBody) {//adornment correction (due to non determinist file reading)
                 Map<String,List<String>> constantsForOnePredicate = constants.get(atom.getAtom().getName());
                 int i = 0;
                 for(Variable variable : atom.getAtom().getVars()) {
@@ -351,7 +351,7 @@ public class RecursiveQsqEngine {
             }
             AdornedTgd adornedTgd = new AdornedTgd(adornedHead,adornedBody);
             tgds.add( adornedTgd);
-            state.inputByRule.put(adornedTgd,constants);
+            state.inputByRule.put(adornedTgd,constants);//fill QSQRState
 
         }
         if (!state.adornedRules.containsKey(p.getAtom().getName()))
@@ -439,7 +439,7 @@ public class RecursiveQsqEngine {
 
         } else {
 
-            if (rule.hasRecursion()) {
+            if (rule.hasRecursion()) {//a recursive atom is not free but has to be evaluated : look for all the adbs and previous answers to have a result
                 Map<String, Map<String,List<String>>> constants = new HashMap<>();
                 Map<String, List<String>> filteredAnswers = new HashMap<>();
                 List<AdornedAtom> queue = new ArrayList<>();
@@ -479,7 +479,7 @@ public class RecursiveQsqEngine {
                 Map<String,List<String>> input1 = constants.get(rule.getBody().get(0).getAtom().getName());
                 for (int i = 1; i < queue.size(); i++) {
                     Map<String,List<String>> input2 = constants.get(rule.getBody().get(i).getAtom().getName());
-                    Map<String,List<String>> answers = eval(input1,input2);
+                    Map<String,List<String>> answers = eval(input1,input2); //as above, evaluation and filtering of result.
                     filteredAnswers = filter(rule.getHead(), answers);
                 }
                 Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
@@ -519,7 +519,7 @@ public class RecursiveQsqEngine {
                     headAdornment.add(true);
                 }
                 rule.getHead().setAdornment(headAdornment);//adornment of the head updating
-                if (ansSize == state.ans.size()) {
+                if (ansSize == state.ans.size()) { //if no new result, we have to stop to avoid infinite loop.
                     return ;
                 }
             }
@@ -535,7 +535,7 @@ public class RecursiveQsqEngine {
                     freeAtoms.add(atom);
                 }
             }
-            for(AdornedAtom atom : freeAtoms) {
+            for(AdornedAtom atom : freeAtoms) {//refreshing of inputs according to the answers.
                 inputs.get(atom.getAtom().getName()).clear();
                 for(fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
                     if(relation.getName().equals(atom.getAtom().getName())) {
@@ -551,7 +551,7 @@ public class RecursiveQsqEngine {
                     }
                 }
             }
-            qsqrSubroutine(rule,state.ans.size(),state);
+            qsqrSubroutine(rule,state.ans.size(),state);//evaluation with new inputs
         }
     }
 

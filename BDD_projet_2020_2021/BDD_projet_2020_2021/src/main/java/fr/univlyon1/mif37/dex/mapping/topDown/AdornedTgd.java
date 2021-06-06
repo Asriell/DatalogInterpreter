@@ -31,6 +31,15 @@ public class AdornedTgd {
         return false;
     }
 
+    public Boolean hasRecursion() {
+        for (AdornedAtom a : body) {
+            if (a.getAtom().getName().equals(head.getAtom().getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Constructs an adorned tgd given an adorned atom for the head and a
      * list of adorned atoms for the body.

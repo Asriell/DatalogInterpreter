@@ -14,5 +14,5 @@ MAPPING
 link($x,$y) -> metro($x) .
 link($x,$y) -> metro($y) .
 link($x,$y) -> reachable($x,$y) .
-link($x,$z) , reachable($z,$y) -> reachable($x,$y) .
+link($z,$y) , reachable($x,$z) -> reachable($x,$y) .
 link($x,$y) -> query($y) .

@@ -483,8 +483,6 @@ public class RecursiveQsqEngine {
                         state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),attributes));
                     }
                 }
-            } else {
-                state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),new ArrayList<>()));
             }
 
             inputs.put(head.getAtom().getName(),filteredAnswers);//inputs updating

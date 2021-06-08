@@ -425,34 +425,37 @@ public class RecursiveQsqEngine {
                 filteredAnswers = filter(head,answers);
                 input1 = answers;
             }
-            Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
-            for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
-                List <String> attributes = new ArrayList<>();
-                for (Map.Entry<String,List<String>> vars : filteredAnswers.entrySet()) {
-                    attributes.add(vars.getValue().get(l));
-                }
-                System.out.println(filteredAnswers);
-                Boolean add = true;
+            if (!filteredAnswers.isEmpty()) {
+                Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
+                for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
+                    List <String> attributes = new ArrayList<>();
+                    for(Variable v : head.getAtom().getVars()) {
+                        attributes.add(filteredAnswers.get(v.getName()).get(l));
+                    }
+                    Boolean add = true;
 
-                if (state.ans.size() != 0) {//to not add duplicates
-                    for (fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
-                        int index = 0;
-                        int similarities = 0;
-                        for (index = 0; index < relation.getAttributes().length; index++) {
-                            if (attributes.size() > index){
-                                if (relation.getAttributes()[index].equals(attributes.get(index))) {
-                                    similarities ++;
+                    if (state.ans.size() != 0) {//to not add duplicates
+                        for (fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
+                            int index = 0;
+                            int similarities = 0;
+                            for (index = 0; index < relation.getAttributes().length; index++) {
+                                if (attributes.size() > index){
+                                    if (relation.getAttributes()[index].equals(attributes.get(index))) {
+                                        similarities ++;
+                                    }
                                 }
                             }
-                        }
-                        if (similarities == index) {
-                            add = false;
+                            if (similarities == index) {
+                                add = false;
+                            }
                         }
                     }
+                    if (add) {
+                        state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),attributes));
+                    }
                 }
-                if (add) {
-                    state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),attributes));
-                }
+            } else {
+                state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(head.getAtom().getName(),new ArrayList<>()));
             }
 
             inputs.put(head.getAtom().getName(),filteredAnswers);//inputs updating
@@ -565,6 +568,7 @@ public class RecursiveQsqEngine {
             for(AdornedAtom atom : freeAtoms) {//refreshing of inputs according to the answers.
                 inputs.get(atom.getAtom().getName()).clear();
                 for(fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
+                    System.out.println(relation);
                     if(relation.getName().equals(atom.getAtom().getName())) {
                         int i = 0;
                         for( Variable var : state.adornedRules.get(atom.getAtom().getName()).get(0).getHead().getAtom().getVars()) {

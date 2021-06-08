@@ -4,7 +4,6 @@ link(PartDieu,Charpennes)
 link(Debourg,PartDieu)
 link(PartDieu,Debourg)
 cst(Charpennes)
-cst(Debourg)
 
 IDB
 metro($x)
@@ -16,4 +15,4 @@ link($x,$y) -> metro($x) .
 link($x,$y) -> metro($y) .
 link($x,$y) -> reachable($x,$y) .
 link($z,$y) , reachable($x,$z) -> reachable($x,$y) .
-cst($x) , reachable($x,$y) -> query($y) .
+link($x,$y) -> query($x) .

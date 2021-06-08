@@ -1,0 +1,18 @@
+EDB
+type(Grass)
+type(Water)
+type(Fire)
+weak(Grass,Fire)
+weak(Fire,Water)
+weak(Water,Grass)
+hasType(Squirtle,Water)
+hasType(Bulbasaur,Grass)
+hasType(Charmander,Fire)
+
+IDB
+resist($x,$y)
+beats($x,$y)
+
+MAPPING
+weak($x,$y) -> resist($y,$x).
+hasType($x,$z), weak($w,$z), hasType($y,$w)-> beats($x,$y).

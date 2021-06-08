@@ -133,7 +133,16 @@ public class RecursiveQsqEngine {
                             }
                         }
                     }
-                    constants.put(left.getName(),constantsForOnePredicate);
+                    if (!constants.containsKey(left.getName())) {
+                        constants.put(left.getName(),constantsForOnePredicate);
+                    } else {
+                        Map<String,List<String>> CFOP = constants.get(left.getName());
+                        for(Map.Entry<String,List<String>> elements : constantsForOnePredicate.entrySet()) {
+                            if(!CFOP.containsKey(elements.getKey())){
+                                CFOP.put(elements.getKey(), elements.getValue());
+                            }
+                        }
+                    }
                     body.add(new AdornedAtom(left,booleans));
                 }
 
@@ -391,11 +400,28 @@ public class RecursiveQsqEngine {
             Map<String, List<String>> filteredAnswers = new HashMap<>();
             for (int indexAtoms = 0; indexAtoms < body.size(); indexAtoms++) {
                 if (indexAtoms >= 1) {
-                    input2 = inputs.get(body.get(indexAtoms).getAtom().getName());// for the atom 1 : $x = {...], $y = {...}
+                    input2 = new HashMap<>(inputs.get(body.get(indexAtoms).getAtom().getName()));// for the atom 1 : $x = {...], $y = {...}
                 } else {
-                    input2 = input1;
+                    input2 = new HashMap<>(input1);
                 }
+
+                Map<String,List<String>> input2Tmp = new HashMap<>(input2);
+                for (Map.Entry<String,List<String>> inputEntry : input2Tmp.entrySet()) {
+                    Boolean exists = false;
+                    for(Variable v : body.get(indexAtoms).getAtom().getVars()) {
+                        String s = v.getName();
+                        if(s.equals(inputEntry.getKey())) {
+                            exists = true;
+                        }
+
+                    }
+                    if (!exists) {
+                        input2.remove(inputEntry.getKey());
+                    }
+                }
+
                 Map<String,List<String>> answers = eval(input1,input2);
+
                 filteredAnswers = filter(head,answers);
                 input1 = answers;
             }
@@ -405,6 +431,7 @@ public class RecursiveQsqEngine {
                 for (Map.Entry<String,List<String>> vars : filteredAnswers.entrySet()) {
                     attributes.add(vars.getValue().get(l));
                 }
+                System.out.println(filteredAnswers);
                 Boolean add = true;
 
                 if (state.ans.size() != 0) {//to not add duplicates

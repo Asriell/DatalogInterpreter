@@ -16,4 +16,4 @@ link($x,$y) -> metro($x) .
 link($x,$y) -> metro($y) .
 link($x,$y) -> reachable($x,$y) .
 link($z,$y) , reachable($x,$z) -> reachable($x,$y) .
-cst($x) ,link($x,$y) -> query($x,$y) .
+cst($x),link($x,$y) -> query($y) .

@@ -228,7 +228,6 @@ public class RecursiveQsqEngine {
         List<AdornedTgd> tgds = new ArrayList<>();
         Map<String,List<String>> inputAllPredicates = new HashMap<>();
         for(Tgd tgd : unadornedRules) {//adornment for all unadorned rules which contains our predicate
-
             Atom head = tgd.getRight();
             Collection<Literal> body = tgd.getLeft();
             List<Boolean> adornments = new ArrayList<>();
@@ -391,6 +390,36 @@ public class RecursiveQsqEngine {
      *            current state of evaluation-wide variables
      */
     private void qsqrSubroutine(AdornedTgd rule, int ansSize, QSQRState state) {
+
+        List<Integer> commons = new ArrayList<>();//non determinist rule reading -> sorting of the rule
+        for(int i = 0; i < rule.getBody().size();i++) {
+            int common = 0;
+            AdornedAtom atom1 = rule.getBody().get(i);
+            for(int j = 0; j < rule.getBody().size(); j++) {
+                AdornedAtom atom2 = rule.getBody().get(j);
+                for(Variable var1 : atom1.getAtom().getVars()) {
+                    for(Variable var2 : atom2.getAtom().getVars()) {
+                        if (var1.getName().equals(var2.getName())) {
+                            common ++;
+                        }
+                    }
+                }
+            }
+            commons.add(common);
+        }
+
+        for(int i = 0; i < rule.getBody().size();i++){
+            int maxId = i;
+            int max = commons.get(i);
+            for(int j = i; j <  rule.getBody().size(); j++) {
+                if (max < commons.get(j)) {
+                    maxId = j;
+                }
+            }
+            AdornedAtom tmp = rule.getBody().get(i);
+            rule.getBody().set(i, rule.getBody().get(maxId));
+            rule.getBody().set(maxId, tmp);
+        }
         Map<String,Map<String,List<String>>> inputs = (Map<String,Map<String,List<String>>>)state.inputByRule.get(rule); //inputs by atoms and by variables
         if (!rule.bodyHasFree()) {//If no free variable -> already computed, we can build the answer with AND of inputs i, the state.
             AdornedAtom head = rule.getHead();

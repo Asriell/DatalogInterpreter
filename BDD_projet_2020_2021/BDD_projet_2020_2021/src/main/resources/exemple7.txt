@@ -15,4 +15,3 @@ beats($x,$y)
 
 MAPPING
 weak($x,$y) -> resist($y,$x).
-hasType($x,$z), weak($w,$z), hasType($y,$w)-> beats($x,$y).

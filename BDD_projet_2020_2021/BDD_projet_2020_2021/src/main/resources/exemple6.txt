@@ -1,17 +1,18 @@
 EDB
-type(Grass)
-type(Water)
-type(Fire)
-weak(Grass,Fire)
-weak(Fire,Water)
-weak(Water,Grass)
-hasType(Squirtle,Water)
-hasType(Bulbasaur,Grass)
-hasType(Charmander,Fire)
+link(Charpennes,Perrache)
+link(PartDieu,Charpennes)
+link(Debourg,PartDieu)
+link(PartDieu,Debourg)
+cst(Charpennes)
 
 IDB
-resist($x,$y)
-beats($x,$y)
+metro($x)
+reachable($x,$y)
+query($y)
 
 MAPPING
-weak($x,$y) -> resist($y,$x).
+link($x,$y) -> metro($x) .
+link($x,$y) -> metro($y) .
+link($x,$y) -> reachable($x,$y) .
+link($z,$y) , reachable($x,$z) -> reachable($x,$y) .
+cst($x) , reachable($x,$y) -> query($y) .

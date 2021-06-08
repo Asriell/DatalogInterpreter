@@ -539,37 +539,41 @@ public class RecursiveQsqEngine {
                     Map<String,List<String>> answers = eval(input1,input2); //as above, evaluation and filtering of result.
                     filteredAnswers = filter(rule.getHead(), answers);
                 }
-                Map.Entry<String,List<String>> entries = filteredAnswers.entrySet().iterator().next();//answers updating
-                for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
-                    List <String> attributes = new ArrayList<>();
-                    for (Map.Entry<String,List<String>> vars : filteredAnswers.entrySet()) {
-                        attributes.add(vars.getValue().get(l));
-                    }
-                    Boolean add = true;
+                Iterator<Map.Entry<String,List<String>>> entriesIterator = filteredAnswers.entrySet().iterator();//answers updating
+                if (entriesIterator.hasNext()) {
+                    Map.Entry<String,List<String>> entries = entriesIterator.next();
+                    for (int l = 0; l < filteredAnswers.get(entries.getKey()).size() ; l++) {
+                        List <String> attributes = new ArrayList<>();
+                        for (Map.Entry<String,List<String>> vars : filteredAnswers.entrySet()) {
+                            attributes.add(vars.getValue().get(l));
+                        }
+                        Boolean add = true;
 
-                    if (state.ans.size() != 0) {//to not add duplicates
-                        for (fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
-                            int index = 0;
-                            int similarities = 0;
-                            for (index = 0; index < relation.getAttributes().length; index++) {
-                                if (attributes.size() > index){
-                                    if (relation.getAttributes()[index].equals(attributes.get(index))) {
-                                        similarities ++;
+                        if (state.ans.size() != 0) {//to not add duplicates
+                            for (fr.univlyon1.mif37.dex.mapping.Relation relation : state.ans) {
+                                int index = 0;
+                                int similarities = 0;
+                                for (index = 0; index < relation.getAttributes().length; index++) {
+                                    if (attributes.size() > index){
+                                        if (relation.getAttributes()[index].equals(attributes.get(index))) {
+                                            similarities ++;
+                                        }
                                     }
                                 }
-                            }
-                            if (similarities == index) {
-                                add = false;
+                                if (similarities == index) {
+                                    add = false;
+                                }
                             }
                         }
+                        if (add) {
+                            state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(rule.getHead().getAtom().getName(),attributes));
+                        }
                     }
-                    if (add) {
-                        state.ans.add(new fr.univlyon1.mif37.dex.mapping.Relation(rule.getHead().getAtom().getName(),attributes));
-                    }
+
+                    inputs.put(rule.getHead().getAtom().getName(),filteredAnswers);//inputs updating
+                    state.inputByRule.put(rule,inputs);
                 }
 
-                inputs.put(rule.getHead().getAtom().getName(),filteredAnswers);//inputs updating
-                state.inputByRule.put(rule,inputs);
 
                 List<Boolean> headAdornment = new ArrayList<>();
                 for(int i = 0; i < filteredAnswers.size(); i++) {

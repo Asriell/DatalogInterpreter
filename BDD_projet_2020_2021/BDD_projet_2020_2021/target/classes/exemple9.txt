@@ -1,0 +1,31 @@
+EDB
+type(Grass)
+type(Water)
+type(Fire)
+weak(Grass,Fire)
+weak(Fire,Water)
+weak(Water,Grass)
+hasType(Squirtle,Water)
+hasType(Bulbasaur,Grass)
+hasType(Charmander,Fire)
+evolves(Charmander,Charmeleon)
+evolves(Charmeleon,Charizard)
+evolves(Bulbasaur,Ivysaur)
+evolves(Ivysaur,Venusaur)
+evolves(Squirtle,Wartortle)
+evolves(Wartortle,Blastoise)
+cst(Charmander)
+
+IDB
+resist($x,$y)
+beats($x,$y)
+finallyEvolves($x,$y)
+family($x,$y)
+
+MAPPING
+weak($x,$y) -> resist($y,$x).
+hasType($x,$z), weak($w,$z), hasType($y,$w)-> beats($x,$y).
+evolves($x,$y) -> finallyEvolves($x,$y).
+evolves($z,$y),finallyEvolves($x,$z) -> finallyEvolves($x,$y).
+
+cst($x), finallyEvolves($x,$y) -> family($y).
